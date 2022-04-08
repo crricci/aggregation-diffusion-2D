@@ -1,9 +1,9 @@
 
 @with_kw struct incomeReallocation{T}
     # aggregation diffusion
-    γa::T = - 0.1       # aggregation (< 0)
+    γa::T = - 0.06       # aggregation (< 0)
     γd::T = 0.025       # diffusion
-    h::T = 0.3          # bandwith  
+    h::T = 0.4          # bandwith  
     γ₁::T = 0.01        # growth linear
     γ₂::T = -0.02       # growth quadratic
     γᵥ::T = 1.0         # potential strength
@@ -13,8 +13,8 @@
     V_GRA::T = 0.0      # reallocation gain labor 
 
     # domain
-    L::T = 2.0
-    T_end::T = 1.0
+    L::T = 4.0
+    T_end::T = 20.0
     borderLength::T = 0.5
     @assert h < borderLength
 
@@ -28,16 +28,11 @@
 
     # confining potential around border
     V::Matrix{T} = make_Vflat(Nx,Ny,Δx,h/2,Wd)
+    ∂xV::Matrix{T} = ∂x(V,Nx,Δx)
+    ∂yV::Matrix{T} = ∂y(V,Nx,Δx)
 
     # initial condition
-    u₀::Matrix{T} = make_u₀(Nx,Ny,Δx)
-    # NBumps::Int = 1
-    # bumpCenter::Vector{T} = [(0,0)]
-    # bumpRadius::Vector{T} = [L/4]
-    # y₀::Vector{T} = initialCondition(NBumps,bumpCenter,bumpRadius,Δx,Nx,x)
-    # centerOfMass::T = sum(y₀ .* x) * Δx
-    # @assert length(bumpCenter) == NBumps
-    # @assert length(bumpRadius) == NBumps
+    u₀::Matrix{T} = make_u₀(Nx,Ny,Δx,L)
 
     # human capital (optional)
     β::Float64 = 1.0
@@ -48,12 +43,24 @@
 
 end
 
-function make_u₀(Nx,Ny,Δx)
-    u₀ = zeros(Nx,Ny)
-
-    u₀[Int(Nx/2):Int(Nx/2)+10,Int(Nx/2):Int(Nx/2)+10] .= 1
-
+function make_u₀(Nx,Ny,Δx,L)
+    # u₀ = zeros(Nx,Ny)
+    # u₀[Int(Nx/2):Int(Nx/2)+10,Int(Nx/2):Int(Nx/2)+10] .= 1
+    
+    u₀ = bump([L/4,L/4],0.3,0.5,Nx,Ny,Δx) +   
+        bump([3/4*L,L/4],0.3,0.5,Nx,Ny,Δx) +
+        bump([L/2,3/4*L],0.3,1.0,Nx,Ny,Δx)   
     return u₀
+end
+
+function bump(center,radius,height,Nx,Ny,Δx)
+    rNpts = ceil(Int,radius/Δx)
+    cⱼ,cᵢ = round.(Int,center/Δx)
+    
+    bump = zeros(Nx,Ny)
+    bump[cᵢ-rNpts:cᵢ+rNpts,cⱼ-rNpts:cⱼ+rNpts] .= height
+    
+    return bump
 end
 
 function make_Vflat(Nx,Ny,Δx,borderLength,Wd)
@@ -61,8 +68,8 @@ function make_Vflat(Nx,Ny,Δx,borderLength,Wd)
     borderNpts = ceil(Int,borderLength/Δx)
     V[1:borderNpts,:] .= 0.0
     V[:,1:borderNpts] .= 0.0
-    V[end-borderNpts:end,:] .= 0.0
-    V[:,end-borderNpts:end] .= 0.0
+    V[end-borderNpts+1:end,:] .= 0.0
+    V[:,end-borderNpts+1:end] .= 0.0
 
     V = imfilter(V,Wd,Fill(0,V))
     return V
@@ -79,7 +86,6 @@ function W(x,h)
 end
 
 function make_WDiscrete(Δx,bandwith)
-
     Npt = ceil(Int,bandwith/Δx)
     Wd = zeros(2Npt+1,2Npt+1)
     x = -Npt*Δx:Δx:Npt*Δx
