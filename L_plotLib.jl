@@ -46,7 +46,7 @@ function plotSurfSol(sol,p; t_step = 0.1)
 end
 
 function plotMass(sol,p)
-    @unpack_incomeReallocation p 
+    @unpack_AD p 
 
     minX = 3.5
     maxX = 4.5 

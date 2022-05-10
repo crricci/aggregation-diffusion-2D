@@ -1,6 +1,6 @@
 
 function df!(du,u,p,t)
-    @unpack_incomeReallocation p 
+    @unpack_AD p 
     Wu = imfilter(u,Wd,Fill(0,u))    
     
     # du .=   γ₁ * u + γ₂ * u.^2 + 
@@ -82,7 +82,7 @@ end
 #     """ 2-D convolution between wₕ and u
 #         if u (Nx x Ny) return same size matrix 
 #     """
-#     @unpack_incomeReallocation p;
+#     @unpack_AD p;
 
 #     Wu = zeros(size(u))
 #     @showprogress for k in 1:Nx, k′ in 1:Nx
