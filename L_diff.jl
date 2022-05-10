@@ -12,6 +12,7 @@ function df!(du,u,p,t)
     du .= ( γd * Δ(u,p) 
     + γa * (∂x(u .* ∂x(Wu,p),p) +  ∂y(u .* ∂y(Wu,p),p))
     + p.γᵥ * (∂x(u .* ∂xV,p) +  ∂y(u .* ∂yV,p)) )
+    
     # @show t
 end
 

@@ -1,5 +1,5 @@
 
-@with_kw struct incomeReallocation{T}
+@with_kw struct AD{T}
     # aggregation diffusion
     γa::T = - 0.06      # aggregation (< 0)
     γd::T = 0.03       # diffusion
