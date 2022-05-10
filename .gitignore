@@ -1,4 +1,5 @@
 .DS_Store
 L_mesh.jl
-R_plotPop.jl
 pics/
+*.jld2
+R_*

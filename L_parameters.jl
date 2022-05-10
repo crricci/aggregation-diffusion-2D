@@ -1,11 +1,15 @@
 
 @with_kw struct incomeReallocation{T}
     # aggregation diffusion
-    γa::T = - 0.06       # aggregation (< 0)
-    γd::T = 0.025       # diffusion
-    h::T = 0.4          # bandwith  
-    γ₁::T = 0.01        # growth linear
-    γ₂::T = -0.02       # growth quadratic
+    γa::T = - 0.06      # aggregation (< 0)
+    γd::T = 0.03       # diffusion
+    # γd::T = 0.025       # diffusion
+    h::T = 0.45          # bandwith  
+    # h::T = 0.3          # bandwith  
+    # γ₁::T = 0.01        # growth linear
+    # γ₂::T = -0.02       # growth quadratic
+    γ₁::T = 0.0         # growth linear
+    γ₂::T = 0.0         # growth quadratic
     γᵥ::T = 1.0         # potential strength
     
     # reallocation gain
@@ -13,26 +17,27 @@
     V_GRA::T = 0.0      # reallocation gain labor 
 
     # domain
-    L::T = 4.0
-    T_end::T = 20.0
+    Lx::T = 8.0
+    Ly::T = 2.0
+    T_end::T = 10000.0
     borderLength::T = 0.5
     @assert h < borderLength
 
     # numerical
     Δx::T = 1e-2
-    Nx::Int = Int(L/Δx)
-    Ny::Int = Int(L/Δx)
-    x::LinRange{T, Int64} = LinRange(0,L,Nx)
-    y::LinRange{T, Int64} = LinRange(0,L,Nx)
+    Nx::Int = Int(Lx/Δx)
+    Ny::Int = Int(Ly/Δx)
+    x::LinRange{T, Int64} = LinRange(0,Lx,Nx)
+    y::LinRange{T, Int64} = LinRange(0,Ly,Ny)
     Wd::Matrix{T} = make_WDiscrete(Δx,h)
 
     # confining potential around border
     V::Matrix{T} = make_Vflat(Nx,Ny,Δx,h/2,Wd)
-    ∂xV::Matrix{T} = ∂x(V,Nx,Δx)
-    ∂yV::Matrix{T} = ∂y(V,Nx,Δx)
+    ∂xV::Matrix{T} = ∂x(V,Nx,Ny,Δx)
+    ∂yV::Matrix{T} = ∂y(V,Nx,Ny,Δx)
 
     # initial condition
-    u₀::Matrix{T} = make_u₀(Nx,Ny,Δx,L)
+    u₀::Matrix{T} = make_u₀(Nx,Ny,Δx,Lx,Ly)
 
     # human capital (optional)
     β::Float64 = 1.0
@@ -43,24 +48,30 @@
 
 end
 
-function make_u₀(Nx,Ny,Δx,L)
+function make_u₀(Nx,Ny,Δx,Lx,Ly)
     # u₀ = zeros(Nx,Ny)
     # u₀[Int(Nx/2):Int(Nx/2)+10,Int(Nx/2):Int(Nx/2)+10] .= 1
     
-    u₀ = bump([L/4,L/4],0.3,0.5,Nx,Ny,Δx) +   
-        bump([3/4*L,L/4],0.3,0.5,Nx,Ny,Δx) +
-        bump([L/2,3/4*L],0.3,1.0,Nx,Ny,Δx)   
+    # u₀ = bump([L/4,L/4],0.3,0.5,Nx,Ny,Δx) +   
+    #     bump([3/4*L,L/4],0.3,0.5,Nx,Ny,Δx) +
+    #     bump([L/2,3/4*L],0.3,1.0,Nx,Ny,Δx)   
+    u₀ = bump([Lx/2,Ly/2],[3.0,0.4],1.0,Nx,Ny,Δx) 
     return u₀
 end
 
-function bump(center,radius,height,Nx,Ny,Δx)
-    rNpts = ceil(Int,radius/Δx)
-    cⱼ,cᵢ = round.(Int,center/Δx)
+function bump(center,r,height,Nx,Ny,Δx)
+    rx, ry = r
+    rNptsX = ceil(Int,rx/Δx)
+    rNptsY = ceil(Int,ry/Δx)
+    cᵢ,cⱼ = round.(Int,center/Δx)
     
-    bump = zeros(Nx,Ny)
-    bump[cᵢ-rNpts:cᵢ+rNpts,cⱼ-rNpts:cⱼ+rNpts] .= height
+    cube = zeros(Nx,Ny)
+    #symmetric
+    cube[cᵢ-rNptsX:cᵢ+rNptsX+1,cⱼ-rNptsY:cⱼ+rNptsY+1] .= height
+    #asymmetric
+    # cube[cᵢ-rNptsX:cᵢ+rNptsX,cⱼ-rNptsY:cⱼ+rNptsY+1] .= height
     
-    return bump
+    return cube
 end
 
 function make_Vflat(Nx,Ny,Δx,borderLength,Wd)

@@ -1,9 +1,7 @@
 # progress for DifferentialEquations
-using Logging: global_logger
-using TerminalLoggers: TerminalLogger
-global_logger(TerminalLogger())
 
 using LinearAlgebra
+using LoopVectorization
 using DifferentialEquations
 using ImageFiltering
 using Parameters
